@@ -15,7 +15,6 @@ contract PetPark {
     }
 
     enum Gender {
-        None,
         Male,
         Female
     }
@@ -30,38 +29,54 @@ contract PetPark {
         Gender gender;
     }
 
+    //Mapping to assign the borrowed animals to the borrower
     mapping(address => AnimalType) public borrowedAnimals;
 
+    //Mapping to address the borrower info
     mapping(address => BorrowerInfo) public borrowerInfo;
 
     Pet[] public pets;
 
+    //Events
     event Added(AnimalType animalType, uint256 count);
     event Borrowed(AnimalType animalType);
     event Returned(AnimalType animalType);
 
+    //Modifiers
     modifier onlyOwner() {
         require(msg.sender == owner, "Not an owner");
         _;
     }
 
+    modifier checkAnimals(AnimalType animalType) {
+        require(animalType != AnimalType.None, "Invalid animal");
+        _;
+    }
+
+    modifier checkAge(uint age) {
+        require(age > 0, "Invalid Age");
+        _;
+    }
+
+    //Initializing the owner and borrower
     constructor() {
         owner = msg.sender;
         borrower = msg.sender;
     }
 
-    function add(AnimalType _animalType, uint256 _count) public onlyOwner {
-        require(_animalType != AnimalType.None, "Invalid animal");
-        pets.push(Pet(_animalType, _count));
-        emit Added(_animalType, _count);
+    function add(
+        AnimalType animalType,
+        uint256 count
+    ) public onlyOwner checkAnimals(animalType) {
+        pets.push(Pet(animalType, count));
+        emit Added(animalType, count);
     }
 
-    function borrow(uint age, Gender gender, AnimalType animalType) public {
-        require(age > 0, "Invalid Age");
-        require(gender != Gender.None, "Invalid gender");
-
-        require(animalType != AnimalType.None, "Invalid animal type");
-
+    function borrow(
+        uint age,
+        Gender gender,
+        AnimalType animalType
+    ) public checkAnimals(animalType) checkAge(age) {
         if (borrowerInfo[msg.sender].age == 0) {
             borrowerInfo[borrower] = BorrowerInfo(age, gender);
         } else {
